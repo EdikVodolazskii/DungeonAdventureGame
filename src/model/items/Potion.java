@@ -47,7 +47,6 @@ public class Potion extends Item implements Usable {
     // ============================================================
     
     /**
-     * TODO: מימוש use
      * משתמש בשיקוי על הדמות.
      * - אם אין שימושים נותרים או שלא ניתן להשתמש, מחזיר false
      * - אם הסוג הוא HEALTH, מרפא את הדמות בכמות potency
@@ -59,12 +58,24 @@ public class Potion extends Item implements Usable {
      */
     @Override
     public boolean use(Character target) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(!canUse(target))
+            return false;
+        switch (potionType)
+        {
+            case HEALTH -> {
+                target.heal(potency);
+                break;
+            }
+            case MANA -> {
+                target.restoreMana(potency);
+                break;
+            }
+            default -> remainingUses--;
+        }
+        return true;
     }
     
     /**
-     * TODO: מימוש canUse
      * בודק אם ניתן להשתמש בשיקוי על הדמות.
      * - שיקוי בריאות: ניתן להשתמש רק אם הדמות לא בבריאות מלאה
      * - שיקוי מאנה: ניתן להשתמש רק אם הדמות לא במאנה מלאה
@@ -76,8 +87,17 @@ public class Potion extends Item implements Usable {
      */
     @Override
     public boolean canUse(Character target) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(remainingUses==0)
+            return false;
+        switch (potionType)
+        {
+            case HEALTH:
+                return target.getCurrentHealth() < target.getMaxHealth();
+            case MANA:
+                return target.getCurrentMana() < target.getMaxMana();
+            default:
+                return true;
+        }
     }
     
     @Override
@@ -86,15 +106,13 @@ public class Potion extends Item implements Usable {
     }
     
     /**
-     * TODO: מימוש isSellable (דריסה מהמחלקה הבסיסית)
      * שיקוי שנעשה בו שימוש (remainingUses < maxUses) לא ניתן למכירה.
      * 
      * @return true אם ניתן למכור
      */
     @Override
     public boolean isSellable() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return remainingUses == maxUses;
     }
     
     // Getters

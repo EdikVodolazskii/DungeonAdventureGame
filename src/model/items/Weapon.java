@@ -57,8 +57,7 @@ public class Weapon extends Item {
      * @return נזק אקראי
      */
     public int calculateDamage() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return minDamage + (int)(Math.random() * (maxDamage - minDamage + 1));
     }
     
     /**
@@ -68,8 +67,7 @@ public class Weapon extends Item {
      * @return נזק ממוצע (מספר עשרוני)
      */
     public double getAverageDamage() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return (minDamage+maxDamage)*0.5;
     }
     
     // Getters

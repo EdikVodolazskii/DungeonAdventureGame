@@ -73,7 +73,6 @@ public abstract class Character implements Attackable {
     // ============================================================
     
     /**
-     * TODO: מימוש takeDamage
      * מקבל נזק והופך אותו לנזק בפועל אחרי הפחתת שריון.
      * - חשב את סך הפחתת הנזק מכל חלקי השריון המצוידים
      * - הפחת את הנזק המופחת מ-currentHealth
@@ -81,18 +80,25 @@ public abstract class Character implements Attackable {
      */
     @Override
     public void takeDamage(int damage) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        double armorReduction = 0;
+        for(Armor armor : equippedArmor.values())
+        {
+            armorReduction+=armor.calculateDamageReduction();
+        }
+
+        armorReduction = Math.min(armorReduction, 0.75);
+
+        int actualDamage = (int) Math.ceil(damage * (1 - armorReduction));
+
+        currentHealth = Math.max(0, currentHealth - actualDamage);
     }
     
     /**
-     * TODO: מימוש isAlive
      * @return true אם currentHealth > 0
      */
     @Override
     public boolean isAlive() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return currentHealth>0;
     }
     
     @Override
@@ -110,21 +116,19 @@ public abstract class Character implements Attackable {
     // ============================================================
     
     /**
-     * TODO: מימוש addItem
      * מוסיף פריט למלאי.
      * 
      * @param item הפריט להוספה
      * @throws InventoryFullException אם המלאי מלא
      */
     public void addItem(Item item) throws InventoryFullException {
-        // TODO: Implement this method
-        // אם המלאי מלא, זרוק InventoryFullException
-        // אחרת, הוסף את הפריט ל-inventory
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (inventory.size() >= maxInventorySize) {
+            throw new InventoryFullException(item.getName(), maxInventorySize);
+        }
+        inventory.add(item);
     }
     
     /**
-     * TODO: מימוש removeItem
      * מסיר פריט מהמלאי לפי שם.
      * 
      * @param itemName שם הפריט להסרה
@@ -132,15 +136,26 @@ public abstract class Character implements Attackable {
      * @throws ItemNotFoundException אם הפריט לא נמצא
      */
     public Item removeItem(String itemName) throws ItemNotFoundException {
-        // TODO: Implement this method
-        // חפש את הפריט לפי שם
-        // אם לא נמצא, זרוק ItemNotFoundException
-        // אם נמצא, הסר מהמלאי והחזר אותו
-        throw new UnsupportedOperationException("Not implemented yet");
+        int index = -1;
+        for(int i = 0; i < inventory.size(); i++)
+        {
+            if(inventory.get(i).getName().equals(itemName))
+            {
+                index = i;
+                break;
+            }
+        }
+        if(index!=-1)
+        {
+            return inventory.remove(index);
+        }
+        else
+        {
+            throw new ItemNotFoundException(itemName);
+        }
     }
     
     /**
-     * TODO: מימוש findItemsByType
      * מחזיר רשימה של כל הפריטים מסוג מסוים במלאי.
      * השתמש ב-instanceof לבדיקת הסוג.
      * 
@@ -148,24 +163,33 @@ public abstract class Character implements Attackable {
      * @return רשימה של פריטים מהסוג המבוקש
      */
     public <T extends Item> ArrayList<T> findItemsByType(Class<T> itemClass) {
-        // TODO: Implement this method
-        // עבור על כל הפריטים במלאי
-        // אם הפריט הוא מהסוג המבוקש, הוסף אותו לרשימת התוצאות
-        throw new UnsupportedOperationException("Not implemented yet");
+        ArrayList<T> result = new ArrayList<>();
+        for (Item item : inventory) {
+            if (itemClass.isInstance(item)) {
+                result.add((T) item);
+            }
+        }
+        return result;
     }
     
     /**
-     * TODO: מימוש getItemsByRarity
      * מחזיר HashMap שממפה רמת נדירות לרשימת פריטים.
      * 
      * @return HashMap של (ItemRarity -> ArrayList של Items)
      */
     public HashMap<Item.ItemRarity, ArrayList<Item>> getItemsByRarity() {
-        // TODO: Implement this method
-        // צור HashMap חדש
-        // עבור על כל הפריטים במלאי
-        // הוסף כל פריט לרשימה המתאימה לפי הנדירות שלו
-        throw new UnsupportedOperationException("Not implemented yet");
+        HashMap<Item.ItemRarity, ArrayList<Item>> rarityMap = new HashMap<>();
+
+        for (Item.ItemRarity rarity : Item.ItemRarity.values()) {
+            rarityMap.put(rarity, new ArrayList<>());
+        }
+
+        for(Item item : inventory)
+        {
+           rarityMap.get(item.getRarity()).add(item);
+        }
+
+        return rarityMap;
     }
     
     // ============================================================
@@ -173,7 +197,6 @@ public abstract class Character implements Attackable {
     // ============================================================
     
     /**
-     * TODO: מימוש equipWeapon
      * מציית נשק. אם כבר יש נשק מצויד, מחזיר אותו למלאי.
      * 
      * @param weapon הנשק לציוד
@@ -181,16 +204,17 @@ public abstract class Character implements Attackable {
      * @throws InventoryFullException אם אי אפשר להחזיר את הנשק הישן למלאי
      */
     public void equipWeapon(Weapon weapon) throws ItemNotFoundException, InventoryFullException {
-        // TODO: Implement this method
-        // 1. בדוק שהנשק קיים במלאי
-        // 2. אם יש נשק מצויד, החזר אותו למלאי
-        // 3. הסר את הנשק החדש מהמלאי
-        // 4. ציית את הנשק החדש
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(!inventory.contains(weapon))
+        {
+            throw new ItemNotFoundException(weapon.getName());
+        }
+
+        if(equippedWeapon!=null)
+            addItem(equippedWeapon);
+        equippedWeapon = (Weapon) removeItem(weapon.getName());
     }
     
     /**
-     * TODO: מימוש equipArmor
      * מציית שריון. אם כבר יש שריון באותו slot, מחזיר אותו למלאי.
      * 
      * @param armor השריון לציוד
@@ -198,25 +222,33 @@ public abstract class Character implements Attackable {
      * @throws InventoryFullException אם אי אפשר להחזיר את השריון הישן למלאי
      */
     public void equipArmor(Armor armor) throws ItemNotFoundException, InventoryFullException {
-        // TODO: Implement this method
-        // 1. בדוק שהשריון קיים במלאי
-        // 2. אם יש שריון ב-slot הזה, החזר אותו למלאי
-        // 3. הסר את השריון החדש מהמלאי
-        // 4. ציית את השריון ב-HashMap לפי ה-slot שלו
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        if(!inventory.contains(armor))
+        {
+            throw new ItemNotFoundException(armor.getName());
+        }
+
+        Armor.ArmorSlot slot = armor.getSlot();
+        if (equippedArmor.containsKey(slot)) {
+            addItem(equippedArmor.get(slot));
+        }
+
+        inventory.remove(armor);
+        equippedArmor.put(slot, armor);
     }
     
     /**
-     * TODO: מימוש getTotalDefense
      * מחשב את סך ההגנה מכל חלקי השריון.
      * 
      * @return סך ההגנה
      */
     public int getTotalDefense() {
-        // TODO: Implement this method
-        // חבר את ה-defense מכל השריונים ב-equippedArmor
-        // הוסף את baseDefense
-        throw new UnsupportedOperationException("Not implemented yet");
+        int totalDef = baseDefense;
+        for(Armor armor : equippedArmor.values())
+        {
+            totalDef+=armor.getDefense();
+        }
+        return totalDef;
     }
     
     // ============================================================
@@ -224,39 +256,38 @@ public abstract class Character implements Attackable {
     // ============================================================
     
     /**
-     * TODO: מימוש heal
      * מרפא את הדמות בכמות מסוימת.
      * currentHealth לא יכול לעלות מעל maxHealth.
      * 
      * @param amount כמות הריפוי
      */
     public void heal(int amount) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        currentHealth = Math.min(currentHealth+amount, maxHealth);
     }
     
     /**
-     * TODO: מימוש restoreMana
      * משחזר מאנה לדמות.
      * currentMana לא יכול לעלות מעל maxMana.
      * 
      * @param amount כמות המאנה לשחזור
      */
     public void restoreMana(int amount) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        currentMana = Math.min(maxMana, currentMana+amount);
     }
     
     /**
-     * TODO: מימוש useMana
      * משתמש במאנה לכישוף.
      * 
      * @param amount כמות המאנה לשימוש
      * @return true אם היה מספיק מאנה והשימוש הצליח
      */
     public boolean useMana(int amount) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(currentMana>amount)
+        {
+            currentMana-=amount;
+            return true;
+        }
+        return false;
     }
     
     // ============================================================
@@ -264,7 +295,6 @@ public abstract class Character implements Attackable {
     // ============================================================
     
     /**
-     * TODO: מימוש gainExperience
      * מוסיף ניסיון לדמות ומעלה רמה אם צריך.
      * כל EXPERIENCE_PER_LEVEL נקודות ניסיון מעלות רמה אחת.
      * ניתן לעלות כמה רמות בבת אחת.
@@ -272,10 +302,14 @@ public abstract class Character implements Attackable {
      * @param amount כמות הניסיון
      */
     public void gainExperience(int amount) {
-        // TODO: Implement this method
-        // הוסף את הניסיון
-        // כל עוד יש מספיק ניסיון לרמה הבאה, העלה רמה וקרא ל-onLevelUp
-        throw new UnsupportedOperationException("Not implemented yet");
+        experience+=amount;
+
+        while (experience >= level*EXPERIENCE_PER_LEVEL)
+        {
+            experience-=level*EXPERIENCE_PER_LEVEL;
+            level++;
+            onLevelUp();
+        }
     }
     
     /**

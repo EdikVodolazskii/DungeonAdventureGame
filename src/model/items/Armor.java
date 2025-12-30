@@ -56,8 +56,8 @@ public class Armor extends Item {
      * @return אחוז הפחתת נזק (בין 0.0 ל-0.75)
      */
     public double calculateDamageReduction() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        return Math.min(defense * getSlot().getDefenseContribution(), 0.75);
     }
     
     /**
@@ -68,8 +68,7 @@ public class Armor extends Item {
      * @return הנזק אחרי ההפחתה (מספר שלם, לעגל כלפי מעלה)
      */
     public int reduceDamage(int incomingDamage) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return (int) Math.ceil(incomingDamage * (1 - calculateDamageReduction()));
     }
     
     // Getters
