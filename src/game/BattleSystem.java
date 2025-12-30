@@ -5,10 +5,8 @@ import model.items.Item;
 import model.items.Potion;
 import model.exceptions.InvalidActionException;
 import model.exceptions.ItemNotFoundException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Comparator;
+
+import java.util.*;
 
 /**
  * מערכת הקרב של המשחק.
@@ -39,21 +37,21 @@ public class BattleSystem {
     // ============================================================
     
     /**
-     * TODO: מימוש queueAction
      * מוסיף פעולה לתור הפעולות.
      * 
      * @param action הפעולה להוספה
      * @throws InvalidActionException אם הקרב כבר הסתיים
      */
     public void queueAction(BattleAction action) throws InvalidActionException {
-        // TODO: Implement this method
-        // 1. בדוק שהקרב לא הסתיים
-        // 2. הוסף את הפעולה לתור
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(battleEnded)
+        {
+            throw new InvalidActionException("queue", "the game is ended");
+        }
+
+        actionQueue.add(action);
     }
     
     /**
-     * TODO: מימוש queuePlayerAction
      * יוצר ומוסיף פעולה של השחקן.
      * 
      * @param actionType סוג הפעולה
@@ -61,24 +59,32 @@ public class BattleSystem {
      */
     public void queuePlayerAction(BattleAction.ActionType actionType) 
             throws InvalidActionException {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(battleEnded)
+        {
+            throw new InvalidActionException("queue player", "the game is ended");
+        }
+        BattleAction action= new BattleAction(player, enemy, actionType);
+        queueAction(action);
     }
     
     /**
-     * TODO: מימוש queuePlayerItemAction
      * יוצר ומוסיף פעולה של שימוש בפריט.
      * 
      * @param itemName שם הפריט
      * @throws InvalidActionException אם הקרב הסתיים
      */
     public void queuePlayerItemAction(String itemName) throws InvalidActionException {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(battleEnded)
+        {
+            throw new InvalidActionException("queue item", "the game is ended");
+        }
+
+        BattleAction action = new BattleAction(player, enemy, BattleAction.ActionType.USE_ITEM, itemName);
+        queueAction(action);
+
     }
     
     /**
-     * TODO: מימוש generateEnemyAction
      * יוצר פעולה אקראית לאויב (AI פשוט).
      * - 60% התקפה רגילה
      * - 25% יכולת מיוחדת
@@ -87,35 +93,106 @@ public class BattleSystem {
      * @return פעולת האויב
      */
     public BattleAction generateEnemyAction() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        Random rnd = new Random();
+        int number = rnd.nextInt(0,101);
+        BattleAction act = null;
+
+        if(number<25)
+        {
+            act = new BattleAction(player, enemy, BattleAction.ActionType.DEFEND);
+        } else if (number >= 25 && number<60) {
+            act = new BattleAction(player, enemy, BattleAction.ActionType.SPECIAL);
+        }
+        else {
+            act = new BattleAction(player, enemy, BattleAction.ActionType.ATTACK);
+        }
+        return act;
     }
     
     /**
-     * TODO: מימוש processNextAction
      * מבצע את הפעולה הבאה בתור.
      * 
      * @return תיאור מה קרה, או null אם התור ריק
      */
-    public String processNextAction() {
-        // TODO: Implement this method
-        // 1. בדוק שהתור לא ריק
-        // 2. הוצא פעולה מהתור
-        // 3. בצע את הפעולה לפי הסוג שלה
-        // 4. בדוק אם הקרב הסתיים
-        // 5. רשום ללוג והחזר תיאור
-        throw new UnsupportedOperationException("Not implemented yet");
+    public String processNextAction() throws InvalidActionException {
+        if (actionQueue.isEmpty()) {
+            return null;
+        }
+
+        BattleAction action = actionQueue.poll();
+        Character actor = action.getActor();
+        Character target = action.getTarget();
+        BattleAction.ActionType type = action.getActionType();
+
+        if (!actor.isAlive()) {
+            return processNextAction();
+        }
+
+        String resultMessage = "";
+
+        try {
+            switch (type) {
+                case ATTACK:
+                    int damage = executeAttack(actor, target);
+                    resultMessage = String.format("%s attacked %s for %d damage.",
+                            actor.getName(), target.getName(), damage);
+                    break;
+
+                case SPECIAL:
+                    boolean specialSuccess = executeSpecialAbility(actor, target);
+                    if (specialSuccess) {
+                        resultMessage = String.format("%s used a Special Ability on %s!",
+                                actor.getName(), target.getName());
+                    } else {
+                        resultMessage = String.format("%s tried to use Special Ability but failed (no mana/rage).",
+                                actor.getName());
+                    }
+                    break;
+
+                case DEFEND:
+                    executeDefend(actor);
+                    resultMessage = String.format("%s entered defensive stance.", actor.getName());
+                    break;
+
+                case USE_ITEM:
+                    String itemName = action.getItemName();
+                    boolean itemSuccess = executeUseItem(actor, itemName);
+                    if (itemSuccess) {
+                        resultMessage = String.format("%s used item: %s.", actor.getName(), itemName);
+                    } else {
+                        resultMessage = String.format("%s failed to use item.", actor.getName());
+                    }
+                    break;
+
+                case FLEE:
+                    boolean fleeSuccess = executeFlee(actor);
+                    if (fleeSuccess) {
+                        resultMessage = String.format("%s fled from battle!", actor.getName());
+                        battleEnded = true;
+                    } else {
+                        resultMessage = String.format("%s tried to flee but failed!", actor.getName());
+                    }
+                    break;
+            }
+        } catch (ItemNotFoundException e) {
+            resultMessage = String.format("%s tried to use an item but couldn't find it.", actor.getName());
+        }
+
+        checkBattleEnd();
+        logMessage(resultMessage);
+        return resultMessage;
     }
     
     /**
-     * TODO: מימוש processAllActions
      * מבצע את כל הפעולות בתור עד שהוא מתרוקן או שהקרב נגמר.
      * 
      * @return רשימה של כל התיאורים של מה שקרה
      */
-    public ArrayList<String> processAllActions() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+    public ArrayList<String> processAllActions() throws InvalidActionException {
+        ArrayList<String> actions = new ArrayList<>();
+        while (!actionQueue.isEmpty()&&!battleEnded)
+            actions.add(processNextAction());
+        return actions;
     }
     
     // ============================================================
@@ -123,7 +200,6 @@ public class BattleSystem {
     // ============================================================
     
     /**
-     * TODO: מימוש executeAttack
      * מבצע התקפה רגילה.
      * 
      * @param attacker התוקף
@@ -131,12 +207,12 @@ public class BattleSystem {
      * @return הנזק שנגרם
      */
     private int executeAttack(Character attacker, Character defender) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        int damage = attacker.calculateAttackDamage();
+        defender.takeDamage(damage);
+        return damage;
     }
     
     /**
-     * TODO: מימוש executeSpecialAbility
      * מבצע יכולת מיוחדת.
      * 
      * @param actor המבצע
@@ -144,12 +220,10 @@ public class BattleSystem {
      * @return true אם הצליח
      */
     private boolean executeSpecialAbility(Character actor, Character target) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return actor.useSpecialAbility(target);
     }
     
     /**
-     * TODO: מימוש executeUseItem
      * משתמש בפריט.
      * 
      * @param actor המשתמש
@@ -157,29 +231,34 @@ public class BattleSystem {
      * @return true אם הצליח
      * @throws ItemNotFoundException אם הפריט לא נמצא
      */
-    private boolean executeUseItem(Character actor, String itemName) 
+    private boolean executeUseItem(Character actor, String itemName)
             throws ItemNotFoundException {
-        // TODO: Implement this method
-        // 1. חפש את הפריט במלאי
-        // 2. אם זה Potion, השתמש בו
-        // 3. הוסף לסטאק של פריטים אחרונים
-        throw new UnsupportedOperationException("Not implemented yet");
+        ArrayList<Item> inventory = actor.getInventory();
+        for (Item item : inventory) {
+            if (item.getName().equals(itemName)) {
+                if (item instanceof Potion) {
+                    Potion potion = (Potion) item;
+                    if (potion.use(actor)) {
+                        actor.pushRecentlyUsed(item);
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+        throw new ItemNotFoundException(itemName);
     }
     
     /**
-     * TODO: מימוש executeDefend
      * מבצע פעולת הגנה - מפחית נזק בתור הבא ב-50%.
      * 
      * @param defender המגן
      */
     private void executeDefend(Character defender) {
-        // TODO: Implement this method
-        // רשום ללוג שהדמות מגינה
-        throw new UnsupportedOperationException("Not implemented yet");
+        logMessage(defender.getName() + " is defending!");
     }
     
     /**
-     * TODO: מימוש executeFlee
      * מנסה לברוח מהקרב.
      * סיכוי הצלחה = 30% + (רמת שחקן - רמת אויב) * 5%
      * 
@@ -187,8 +266,14 @@ public class BattleSystem {
      * @return true אם ההבריחה הצליחה
      */
     private boolean executeFlee(Character fleeing) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        Character opponent = (fleeing == player) ? enemy : player;
+
+        double chance = 0.30 + (fleeing.getLevel() - opponent.getLevel()) * 0.05;
+
+        if (chance < 0.0) chance = 0.0;
+        if (chance > 1.0) chance = 1.0;
+
+        return Math.random() < chance;
     }
     
     // ============================================================
@@ -196,13 +281,21 @@ public class BattleSystem {
     // ============================================================
     
     /**
-     * TODO: מימוש checkBattleEnd
      * בודק אם הקרב הסתיים וקובע מנצח.
      */
     private void checkBattleEnd() {
-        // TODO: Implement this method
-        // בדוק אם אחד הצדדים מת
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(!player.isAlive())
+        {
+            battleEnded = true;
+            winner = enemy;
+            logMessage(enemy.getName()+ " win");
+        }
+        else if(!enemy.isAlive())
+        {
+            battleEnded = true;
+            winner = player;
+            logMessage(player.getName()+ " win");
+        }
     }
     
     // ============================================================
@@ -210,21 +303,21 @@ public class BattleSystem {
     // ============================================================
     
     /**
-     * TODO: מימוש sortActionsByPriority
      * ממיין רשימת פעולות לפי עדיפות (גבוה לנמוך).
      * השתמש ב-Comparator כמחלקה אנונימית!
      * 
      * @param actions רשימת הפעולות למיון
      */
     public void sortActionsByPriority(ArrayList<BattleAction> actions) {
-        // TODO: Implement this method using anonymous class
-        // צור Comparator<BattleAction> כמחלקה אנונימית
-        // השתמש ב-actions.sort(comparator)
-        throw new UnsupportedOperationException("Not implemented yet");
+        actions.sort(new Comparator<BattleAction>() {
+            @Override
+            public int compare(BattleAction a1, BattleAction a2) {
+                return Integer.compare(a2.getPriority(), a1.getPriority());
+            }
+        });
     }
     
     /**
-     * TODO: מימוש getActionsFilteredBy
      * מסנן פעולות לפי תנאי מסוים.
      * השתמש בממשק פונקציונלי!
      * 
@@ -234,8 +327,16 @@ public class BattleSystem {
      */
     public ArrayList<BattleAction> getActionsFilteredBy(
             ArrayList<BattleAction> actions, ActionFilter filter) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        ArrayList<BattleAction> filteredActions = new ArrayList<>();
+        for(BattleAction action : actions)
+        {
+            if(filter.test(action))
+            {
+                filteredActions.add(action);
+            }
+        }
+        return filteredActions;
     }
     
     /**
