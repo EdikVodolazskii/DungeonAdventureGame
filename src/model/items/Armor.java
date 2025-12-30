@@ -48,7 +48,6 @@ public class Armor extends Item {
     // ============================================================
     
     /**
-     * TODO: מימוש calculateDamageReduction
      * מחשב את אחוז הפחתת הנזק שהשריון מספק.
      * הנוסחה: defense * defenseContribution / 100
      * (אך לא יותר מ-75%)
@@ -57,11 +56,10 @@ public class Armor extends Item {
      */
     public double calculateDamageReduction() {
 
-        return Math.min(defense * getSlot().getDefenseContribution(), 0.75);
+        return Math.min(defense * getSlot().getDefenseContribution()/100, 0.75);
     }
     
     /**
-     * TODO: מימוש reduceDamage
      * מחשב כמה נזק יקבל השחקן אחרי הפחתת השריון.
      * 
      * @param incomingDamage הנזק המקורי

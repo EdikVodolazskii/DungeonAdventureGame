@@ -70,8 +70,8 @@ public class Potion extends Item implements Usable {
                 target.restoreMana(potency);
                 break;
             }
-            default -> remainingUses--;
         }
+        remainingUses--;
         return true;
     }
     

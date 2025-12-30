@@ -28,58 +28,62 @@ public class DungeonMap {
     // ============================================================
     
     /**
-     * TODO: מימוש addLocation
      * מוסיף מיקום חדש למפה.
      * אם זה המיקום הראשון, מגדיר אותו כנקודת ההתחלה.
      * 
      * @param location המיקום להוספה
      */
     public void addLocation(GameLocation location) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+
+        locations.put(location.getId(), location);
+        if(startLocationId == location.getId())
+        {
+            setStartLocation(location.getId());
+        }
     }
     
     /**
-     * TODO: מימוש connectLocations
      * מחבר שני מיקומים זה לזה (דו-כיווני).
      * 
      * @param locationId1 מזהה מיקום ראשון
      * @param locationId2 מזהה מיקום שני
      * @throws InvalidActionException אם אחד המיקומים לא קיים
      */
-    public void connectLocations(String locationId1, String locationId2) 
-            throws InvalidActionException {
-        // TODO: Implement this method
-        // 1. בדוק שני המיקומים קיימים
-        // 2. הוסף חיבור דו-כיווני
-        throw new UnsupportedOperationException("Not implemented yet");
+    public void connectLocations(String locationId1, String locationId2) throws InvalidActionException {
+         if(!locations.containsKey(locationId1))
+         {
+             throw new InvalidActionException("locations connecyion", locationId1 + "not on the map");
+         }
+        else if(!locations.containsKey(locationId2))
+        {
+            throw new InvalidActionException("locations connecyion", locationId2 + "not on the map");
+        }
+
+        locations.get(locationId1).addConnection(locationId2);
+        locations.get(locationId2).addConnection(locationId1);
+
     }
     
     /**
-     * TODO: מימוש getLocation
      * מחזיר מיקום לפי מזהה.
      * 
      * @param locationId מזהה המיקום
      * @return המיקום, או null אם לא קיים
      */
     public GameLocation getLocation(String locationId) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return locations.get(locationId);
     }
     
     /**
-     * TODO: מימוש getCurrentLocation
      * מחזיר את המיקום הנוכחי.
      * 
      * @return המיקום הנוכחי
      */
     public GameLocation getCurrentLocation() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return locations.get(currentLocationId);
     }
     
     /**
-     * TODO: מימוש moveTo
      * מזיז את השחקן למיקום אחר.
      * ניתן לזוז רק למיקום מחובר!
      * 
@@ -87,70 +91,98 @@ public class DungeonMap {
      * @throws InvalidActionException אם המיקום לא קיים או לא מחובר
      */
     public void moveTo(String locationId) throws InvalidActionException {
-        // TODO: Implement this method
-        // 1. בדוק שהמיקום קיים
-        // 2. בדוק שהמיקום הנוכחי מחובר למיקום החדש
-        // 3. עדכן את currentLocationId
-        // 4. סמן את המיקום החדש כמבוקר
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(!locations.containsKey(locationId))
+            throw new InvalidActionException("mov connection", locationId + "not on the map");
+        if(!locations.get(currentLocationId).isConnectedTo(locationId))
+            throw new InvalidActionException("mov connection", locationId + "not connected to your current location");
+
+        currentLocationId = locationId;
+        locations.get(locationId).isVisited();
     }
-    
+
     /**
-     * TODO: מימוש getAccessibleLocations
      * מחזיר רשימה של כל המיקומים שניתן להגיע אליהם מהמיקום הנוכחי.
-     * 
+     *
      * @return רשימת מיקומים נגישים
      */
     public ArrayList<GameLocation> getAccessibleLocations() {
-        // TODO: Implement this method
-        // עבור על כל ה-connectedLocationIds של המיקום הנוכחי
-        // והחזר רשימה של האובייקטים המתאימים
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (currentLocationId == null || !locations.containsKey(currentLocationId)) {
+            return new ArrayList<>();
+        }
+        ArrayList<GameLocation> accessibleLocations = new ArrayList<>();
+
+        for(String id : locations.get(currentLocationId).getConnectedLocationIds())
+        {
+            accessibleLocations.add(locations.get(id));
+        }
+        return accessibleLocations;
+
     }
-    
+
     /**
-     * TODO: מימוש getVisitedLocations
      * מחזיר רשימה של כל המיקומים שכבר ביקרנו בהם.
      * 
      * @return רשימת מיקומים מבוקרים
      */
     public ArrayList<GameLocation> getVisitedLocations() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        ArrayList<GameLocation> visited = new ArrayList<>();
+        for(GameLocation loc : getAllLocations().values())
+        {
+            if (loc.isVisited())
+                visited.add(loc);
+        }
+        return visited;
     }
     
     /**
-     * TODO: מימוש getUnvisitedLocations
      * מחזיר רשימה של כל המיקומים שעוד לא ביקרנו בהם.
      * 
      * @return רשימת מיקומים לא מבוקרים
      */
     public ArrayList<GameLocation> getUnvisitedLocations() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        ArrayList<GameLocation> notVisited = new ArrayList<>();
+        for(GameLocation loc : getAllLocations().values())
+        {
+            if (!loc.isVisited())
+                notVisited.add(loc);
+        }
+        return notVisited;
     }
     
     /**
-     * TODO: מימוש getLocationsByDangerLevel
      * מחזיר HashMap שממפה רמת סכנה לרשימת מיקומים.
      * 
      * @return HashMap של (Integer -> ArrayList של GameLocation)
      */
     public HashMap<Integer, ArrayList<GameLocation>> getLocationsByDangerLevel() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        HashMap<Integer, ArrayList<GameLocation>> locByDangerLevel = new HashMap<>();
+        for(GameLocation location : locations.values())
+        {
+            if(locByDangerLevel.get(location.getDangerLevel())==null)
+            {
+                locByDangerLevel.put(location.getDangerLevel(), new ArrayList<>());
+            }
+            locByDangerLevel.get(location.getDangerLevel()).add(location);
+        }
+        return locByDangerLevel;
     }
     
     /**
-     * TODO: מימוש getExplorationProgress
      * מחזיר את אחוז ההתקדמות בחקירת המפה.
      * 
      * @return אחוז בין 0.0 ל-1.0
      */
     public double getExplorationProgress() {
-        // TODO: Implement this method
-        // מספר מיקומים מבוקרים / סך כל המיקומים
-        throw new UnsupportedOperationException("Not implemented yet");
+        if (locations.isEmpty()) {
+            return 0.0;
+        }
+        int visited = 0;
+        for (GameLocation loc : locations.values()) {
+            if (loc.isVisited()) {
+                visited++;
+            }
+        }
+        return (double) visited / locations.size();
     }
     
     // Setters for special locations

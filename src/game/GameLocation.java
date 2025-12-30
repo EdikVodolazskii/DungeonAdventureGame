@@ -33,49 +33,46 @@ public class GameLocation {
     // ============================================================
     
     /**
-     * TODO: מימוש addConnection
      * מוסיף חיבור למיקום אחר.
      * לא להוסיף כפילויות!
      * 
      * @param locationId המזהה של המיקום המחובר
      */
     public void addConnection(String locationId) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(!connectedLocationIds.contains(locationId))
+        {
+            connectedLocationIds.add(locationId);
+        }
     }
     
     /**
-     * TODO: מימוש isConnectedTo
      * בודק אם המיקום הזה מחובר למיקום אחר.
      * 
      * @param locationId המזהה של המיקום לבדיקה
      * @return true אם מחובר
      */
     public boolean isConnectedTo(String locationId) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        return connectedLocationIds.contains(locationId);
     }
     
     /**
-     * TODO: מימוש addLoot
      * מוסיף פריט לשלל במיקום.
      * 
      * @param item הפריט להוספה
      */
     public void addLoot(Item item) {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        loot.add(item);
     }
     
     /**
-     * TODO: מימוש collectAllLoot
      * אוסף את כל השלל מהמיקום ומרוקן אותו.
      * 
      * @return רשימה של כל הפריטים שנאספו
      */
     public ArrayList<Item> collectAllLoot() {
-        // TODO: Implement this method
-        throw new UnsupportedOperationException("Not implemented yet");
+        ArrayList<Item> collected = new ArrayList<>(loot);
+        loot.clear();
+        return collected;
     }
     
     /**
